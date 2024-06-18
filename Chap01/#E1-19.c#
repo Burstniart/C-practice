@@ -1,0 +1,52 @@
+#include <stdio.h>
+#define MAXLINE 100
+main () {
+  char line[MAXLINE];
+  char linea[MAXLINE];
+  int len;
+  
+  if ((len = getLine(line)) > 0) {
+      detab(line, linea);
+  }
+  printf("line: %s\n", line);
+  printf("linea: %s\n", linea);
+  printf("fucker\n");
+  
+}
+  
+getLine(l)
+  char l[];
+{
+  int i, c;
+  
+  for (i = 0; (c=getchar()) != EOF && c != '\n'; ++i) {
+    l[i] = c;
+  }
+  if (c == '\n'){
+    l[i] = c;
+    ++i;
+  }
+  l[i] = '\0';
+}
+ 
+detab(tab, notab)
+  char tab[];
+  char notab[];
+ {
+
+   int i = 0;
+   int itabs = 0;
+   int tabs;
+   
+   while (tab[i] != '\0') {
+     if(tab[i] == 't'){
+       for (tabs = 0; tabs < 3; ++tabs) {
+	 notab[itabs] = ' ';
+       }
+     } else
+       notab[itabs] = tab[i];
+     itabs +=  tabs;
+     ++itabs;
+     ++i;
+   }
+}
