@@ -1,0 +1,6 @@
+lines: 19 & tail:5
+fifteen
+sixteen
+seventeen
+eighteen
+nineteen
