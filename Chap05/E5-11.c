@@ -1,220 +1,141 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <stdlib.h>
 
-#define MAX_NR_OF_LINES 5000
+#define LINES 100 /* max number of lines to be sorted */
+#define MAXLEN 1000
 
-#define MAX_LINE_LEN 1000
-#define ALLOC_SIZE 10000
-
-static char alloc_buf[ALLOC_SIZE];
-static char *alloc_p = alloc_buf;
-
-char *alloc(size_t size);
-void afree(char *ptr);
-
-size_t get_line(char line[], size_t max_line_len);
-
-int parse_arg_list(int argc, char *argv[]);
-
-size_t read_lines(char *line_ptr[], const size_t max_nr_of_lines);
-void write_lines(char *line_ptr[], const size_t nr_of_lines);
-
-int numcmp(const char *s1, const char *s2);
-int estrcmp(const char *s1, const char *s2);
-void swap(void *v[], size_t i, size_t j);
-void quick_sort(void *v[], size_t start, size_t end, int (*comp)(void *, void *));
-
-int order = 1; // 1 ascendent, -1 descendent
-int (*comp)(const char *, const char *) = estrcmp;
-
+void sort(char *[], int, int (*)(), int (*)(), int); //sort strings v[0]...v[n-1]
+void writelines(char *[], int); /* write output lines */
+int readlines(char *[], char *, int); /* read input lines for sorting*/
+int get_line(char *, int); /* get line into s, return length */
+  
 int main(int argc, char *argv[])
 {
-  if (!parse_arg_list(argc, argv))
-  {
-    puts("Error: invalid arguments.");
-    return EXIT_FAILURE;
-  }
+  char *lineptr[LINES]; //pinter to text lines
+  int nlines; // number of input lines read
+  int strcmp(), numcmp(); // comparison functions
+  int swap(); // exchange functions
+  int numeric = 0; // 1 if numeric sort
+  int reverse = 0;
+  char store[LINES];
 
-  size_t nr_of_lines;
-  char *line_ptr[MAX_NR_OF_LINES];
-
-  if ((nr_of_lines = read_lines(line_ptr, MAX_NR_OF_LINES)) != -1)
-  {
-    quick_sort((void **)line_ptr, 0, nr_of_lines - 1, (int (*)(void *, void *))comp);
-    write_lines(line_ptr, nr_of_lines);
-  }
-  else
-  {
-    puts("Error: input too large.");
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
-
-int parse_arg_list(int argc, char *argv[])
-{
-  for (int i = 1; i < argc; ++i)
-  {
-    size_t arg_len = strlen(argv[i]);
-    if (arg_len > 1 && argv[i][0] == '-')
-    {
-      for (size_t j = 1; j < arg_len; ++j)
-      {
-        switch (argv[i][j])
-        {
-        case 'n':
-          comp = numcmp;
-          break;
-
-        case 'r':
-          order = -1;
-          break;
-
-        default:
-          return 0;
-          break;
-        }
+  int i;
+  if (argc > 1 && argv[1][0] == '-')
+    for (i = 1; i < strlen(argv[1]); i++) {
+      char c = argv[1][i];
+      switch (c) {
+      case 'n':
+	numeric = 1;
+	break;
+      case 'r':
+	reverse = 1;
+	break;
+      default:
+	break;
       }
     }
+
+  if ((nlines = readlines(lineptr, store, LINES)) >= 0) {
+    if (numeric)
+      sort(lineptr, nlines, numcmp, swap, reverse);
     else
-    {
-      return 0;
-    }
-  }
-
-  return 1;
-}
-
-size_t get_line(char line[], size_t max_line_len)
-{
-  int c;
-  size_t i;
-
-  for (i = 0; i < max_line_len - 1 && (c = getc(stdin)) != EOF && c != '\n'; ++i)
-  {
-    line[i] = c;
-  }
-
-  if (c == '\n')
-  {
-    line[i] = c;
-    ++i;
-  }
-
-  line[i] = '\0';
-
-  return i;
-}
-
-size_t read_lines(char *line_ptr[], const size_t max_nr_of_lines)
-{
-  size_t line_length;
-  size_t nr_of_lines = 0;
-
-  char *current_line = alloc(MAX_LINE_LEN);
-  char *current_line_copy = NULL;
-
-  while ((line_length = get_line(current_line, MAX_LINE_LEN)))
-  {
-    if (nr_of_lines >= max_nr_of_lines || (current_line_copy = alloc(line_length)) == NULL)
-    {
-      return -1;
-    }
-    else
-    {
-      current_line[line_length - 1] = '\0';
-      strcpy(current_line_copy, current_line);
-      line_ptr[nr_of_lines++] = current_line_copy;
-    }
-  }
-
-  afree(current_line);
-
-  return nr_of_lines;
-}
-
-void write_lines(char *line_ptr[], const size_t nr_of_lines)
-{
-  for (size_t i = 0; i < nr_of_lines; ++i)
-  {
-    puts(line_ptr[i]);
-    afree(line_ptr[i]);
-  }
-}
-
-int numcmp(const char *s1, const char *s2)
-{
-  double nr1 = atof(s1);
-  double nr2 = atof(s2);
-
-  if (nr1 < nr2)
-  {
-    return order * -1;
-  }
-  else if (nr1 > nr2)
-  {
-    return order * 1;
-  }
-
+      sort(lineptr, nlines, strcmp, swap, reverse);
+    writelines(lineptr, nlines);
+  } else
+    printf("input too big to sort\n");
   return 0;
 }
 
-int estrcmp(const char *s1, const char *s2)
+// int(*comp)() means pointer to function that returns int
+// int *comp()  means function that returns int opinter
+
+void sort(char *v[], int n, int(*comp)(), int (*exch)(), int reverse) //sort strings v[0]...v[n-1]
 {
-  return order * strcmp(s1, s2);
+  int gap, i, j, dif;
+  for(gap = n/2; gap > 0; gap /= 2)
+    for (i = gap; i < n; i++)
+      for (j = i-gap; j >= 0; j-= gap) {
+	dif = (*comp)(v[j], v[j+gap]);
+	if (reverse == 1 && dif > 0) 
+	  break;
+	else if (reverse == 0 && dif <= 0)
+	  break;
+		/*
+	//if (reverse)
+	  if ((*comp)(v[j], v[j+gap]) > 0)
+	    break;
+	else
+//	*/
+	
+	/*
+	  if ((*comp)(v[j], v[j+gap]) <= 0)
+	    break;
+	    */
+	(*exch)(&v[j], &v[j+gap]);
+      }
 }
 
-void swap(void *v[], size_t i, size_t j)
-{
-  void *temp;
-  temp = v[i];
-  v[i] = v[j];
-  v[j] = temp;
+
+int numcmp(char *s1, char *s2){
+  double atof(), v1, v2;
+
+  v1 = atof(s1);
+  v2 = atof(s2);
+  if (v1 < v2)
+    return -1;
+  else if (v1 > v2)
+    return 1;
+  else
+    return (0);
 }
 
-void quick_sort(void *v[], size_t start, size_t end, int (*comp)(void *, void *))
+int swap(char *px[], char *py[]){
+  char *temp;
+
+  temp = *px;
+  *px = *py;
+  *py = temp;
+}
+
+void writelines(char *lineptr[], int nlines) /* write output lines */
 {
-  if ((long)start >= (long)end)
-  {
-    return;
-  }
+  int i;
 
-  swap(v, start, (start + end) / 2);
+  for (i = 0; i < nlines; i++)
+    printf("%s\n", lineptr[i]);
+}
 
-  size_t last = start;
-  for (size_t i = start + 1; i <= end; ++i)
-  {
-    if ((*comp)(v[i], v[start]) < 0)
-    {
-      swap(v, ++last, i);
+int readlines(char *lineptr[], char *linestor, int maxlines) /* read input lines for sorting*/
+{
+  int len, nlines;
+  char *alloc(), line[MAXLEN];
+  char *p = linestor;
+  char *linestop = linestor + 500;
+
+  nlines = 0;
+  while ((len = get_line(line, MAXLEN)) > 0)
+    if (nlines >= maxlines || (p = malloc(len)) == NULL)
+      return(-1);
+    else {
+      line[len-1] = '\0'; /* zap newline */
+      strcpy(p, line);
+      lineptr[nlines++] = p;
+      p += len;
     }
-  }
-
-  swap(v, start, last);
-  quick_sort(v, start, last - 1, comp);
-  quick_sort(v, last + 1, end, comp);
+  return (nlines);
 }
 
-char *alloc(size_t size)
+int get_line(char *s, int lim) /* get line into s, return length */
 {
-  if (alloc_buf + ALLOC_SIZE - alloc_p >= size)
-  {
-    alloc_p += size;
-    return alloc_p - size;
-  }
+    int c, i;
 
-  return NULL;
+    for (i=0; i<lim-1 && (c=getchar())!=EOF && c!='\n'; ++i)
+        s[i] = c;
+    if (c == '\n') {
+        s[i] = c;
+        ++i;
+    }
+    s[i] = '\0';
+    return(i);
 }
-
-void afree(char *ptr)
-{
-  if (ptr >= alloc_buf && ptr < alloc_buf + ALLOC_SIZE)
-  {
-    alloc_p = ptr;
-  }
-}
-
-// NOTE: run: ./sort -nr < file_in.txt
