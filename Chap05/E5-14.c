@@ -21,8 +21,8 @@ void substr(char *, char *);
 static char fold = 0;
 static char dir = 0;
 char option = 0;
-int pos1 = 0;
-int pos2 = 0;
+int pos1;
+int pos2;
 
 int main(int argc, char *argv[])
 {
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   int reverse = 0;
   char store[LINES];
   
-  
+  /*
   int i = 0;
   char c = argv[0][i];
   if (argc > 1 && argv[1][0] == '-')
@@ -59,6 +59,46 @@ int main(int argc, char *argv[])
     } else if (c = '-') {
     pos2 = atoi(argv[0]+1);
   }
+  */
+  int c;
+  //  printf("flag \n");
+  while(--argc > 0 && (c=(*++argv)[0]) == '-' || c == '+') {
+    //    printf("arg is %c\n",c);
+    if (c == '-' && !isdigit(*(argv[0]+1)))
+      while (c = *++argv[0]) 
+	//		printf(" parameter3\n");
+	switch (c) {
+	case 'n':
+	  numeric = 1;
+	  break;
+	case 'r':
+	  reverse = 1;
+	  break;
+	case 'f':
+	  fold = 1;
+	  break;
+	case 'd':
+	  dir = 1;
+	  break;
+	default:
+	  printf("error syntax parameter\n");
+	  break;
+	}
+    else if (c == '-') {
+      //      printf("got pos2\n");
+      pos2 = atoi(argv[0]+1);
+    }
+    else if (c == '+' && (pos1 = atoi(argv[0]+1)) < 0) {
+      //      printf("got pos1\n");
+      error("Usage: sort -dfnr [+pos1] [-pos2]");
+    }
+  }
+  if (argc || pos1 > pos2)
+    error("Usage: sort -dfnr [+pos1] [-pos2]");
+  //  printf("pos1 %d\n", pos1);
+  //  printf("pos2 %d\n", pos2);
+
+  
   //  printf("pos1 %d\n", pos1);
   if ((nlines = readlines(lineptr, store, LINES)) >= 0) {
     if (numeric)
@@ -66,8 +106,10 @@ int main(int argc, char *argv[])
     else if (dir) {
       sort(lineptr, nlines, charcmp, swap, reverse);
     } else
-      //  sort(lineptr, nlines, strcmp, swap, reverse);
-      sort(lineptr, nlines, strcmpcase, swap, reverse);
+         //  sort(lineptr, nlines, strcmp, swap, reverse);
+      //      sort(lineptr, nlines, strcmpcase, swap, reverse);
+      sort(lineptr, nlines, charcmp, swap, reverse);
+    putchar('\n');
     writelines(lineptr, nlines);
   } else
     printf("input too big to sort\n");
@@ -122,42 +164,51 @@ int strcmpcase(char *s, char *t) {
 
 // Compare as dictionary
 int charcmp (char *s, char *t) {
-    printf("dir\n");
+  //    printf("dir\n");
   char a, b;
   int i, j, endpos;
-  printf("pos1 %d\n", pos1);
+  //int pos1, pos2;
+  //  printf("flag 8\n");
+  //  printf("pos1 %d\n", pos1);
+  //  printf("pos2 %d\n", pos2);
   
   i = j = pos1;
   if (fold) {
+    printf("folding\n");
     lowerit(s);
     lowerit(t);
   }
-
+  //  printf("flag \n");
   if (pos2 > 0)
     endpos = pos2;
   else if ((endpos = strlen(s)) > strlen(t))
     endpos = strlen(t);
-
+  //  printf("flag 2\n");
   do {
-
-      while(i < endpos && !isalnum(*s) && *s != ' ' && *s != '\0'){
+    //    printf("flag 3\n");
+      while(i < endpos && !isalnum(s[i]) && s[i] != ' ' && s[i] != '\0'){
 	//	printf("input \n");
 	//	printf("%s \n",s);
-	s++;
+	i++;
+	//	s++;
     }
-      while(j < endpos && !isalnum(*t) && *t != ' ' && *t != '\0'){
-	printf("%s \n",*t);
-	t++;
+      while(j < endpos && !isalnum(t[j]) && t[j] != ' ' && t[j] != '\0'){
+	//	printf("%s \n",*t);
+	j++;
+	//	t++;
+	//	printf("flag 4\n");
       }
-    if (i > endpos && j < endpos) {
-      a = *s;
-      s++;
-      b = *t;
-      t++;
+    if (i < endpos && j < endpos) {
+      a = s[i];
+      i++;
+      b = t[j];
+      j++;
+      //      printf("flag 5\n");
     if (a == b && a == '\0') 
       return 0;
   }
   } while (a == b && i < endpos && j < endpos);
+  //  printf("flag 6\n");
   return a-b;
 }
 
