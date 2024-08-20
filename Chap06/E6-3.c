@@ -15,6 +15,8 @@
 //VARIABLES
 char buf[BUFSIZE]; /* buffer for ungetch */
 int bufp = 0; /* next free position in buf */
+int quote_flag = 0; // turns on while inside of quotes
+int dquotes_flag = 0; // turns on while inside of double quotes
 
 //STRUCTURES
 struct key {
@@ -51,9 +53,12 @@ int main(int argc, char *argv[]){
   char word[MAXWORD];
 
   while((t = getword(word, MAXWORD)) != EOF)
+    //    printf("%s\n", word);
     if(t == LETTER)
-      if((n = binary(word, keytab, NKEYS)) >= 0)
+      if((n = binary(word, keytab, NKEYS)) >= 0) {
+	if (dquotes_flag == 0 && quote_flag == 0 )
 	keytab[n].keycount++;
+      }
 
   for(n = 0; n < NKEYS; n++)
     if(keytab[n].keycount > 0)
@@ -67,12 +72,49 @@ int getword(char *w, int lim){
   //
   if(type(c = *w++ = getch()) != LETTER) {
     *w = '\0';
+     if (c == '\'') {
+      if (quote_flag == 0)
+	quote_flag = 1;
+      else
+	quote_flag = 0;
+    }
+    if (c == '"') {
+      if (dquotes_flag == 0)
+	dquotes_flag = 1;
+      else
+	dquotes_flag = 0;
+    }
     return(c);
   }
-
+  //  printf("%c\n",c);
   while(--lim > 0) {
     //
     t = type(c = *w++ = getch());
+
+   
+    /*
+    switch (c) {
+    case('\''): 
+      if (quote_flag) {
+	quote_flag = 0;
+	//	  printf("quote off\n");
+      }
+      else {
+	quote_flag = 1;
+	//	  printf("quote on\n");
+      }
+    case('"'): 
+      if (dquotes_flag) {
+	dquotes_flag = 0;
+	//	  printf("double quotes off\n");
+      }
+      else {
+	dquotes_flag = 1;
+	//	  printf("double quotes on\n");
+      }
+      }
+    */
+
     if(t != LETTER && t != DIGIT) {
       ungetch(c);
       break;
@@ -88,7 +130,7 @@ int type(int c) {
     return (LETTER);
     //  else if(c >= '0' && c <= '9' )
   else if(isdigit(c))
-    return (DIGIT);
+    return (DIGIT);  
   else
     return(c);
 }
