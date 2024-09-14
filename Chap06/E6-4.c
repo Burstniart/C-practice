@@ -6,27 +6,37 @@
 #define MAXWORD 100
 #define YES 1
 #define NO 0
+#define BUFSIZE 100
 
-struct tnode {            //the tree node 
-  char *word;             // points to the text
-  struct linklist *lines; // line numbers
-  struct tnode *left;     // left child
-  struct tnode *right;    // right child
+//VARIABLES
+char buf[BUFSIZE]; /* buffer for ungetch */
+int bufp = 0; /* next free position in buf */
+
+struct tnode {            /* the tree node  */
+  char* word;             /* points to the text */
+  int match;              /* match found */
+  struct tnode *left;     /* left child */
+  struct tnode *right;    /* right child */
 };
 
-struct tnode *addtreex{struct tnode *, char *, intm int *};
+struct tnode *addtreex(struct tnode *, char *, int, int *);
 struct tnode *talloc(void);
 
+int getch( void );
+void ungetch(int);
 int compare(char *, struct tnode *, int, int *);
 int getword(char *, int);
 void treexprint(struct tnode*);
-
-//print in alphabetical order each group of variable names identical in the first num characters
+int comment(void);
+struct tnode *talloc(void);
+struct tnode *addtreex(struct tnode *, char *, int, int *);
+  
+/* print in alphabetical order each group of variable names identical in the first num characters */
 int main(int argc, char *argv[]) {
   struct tnode *root;
   char word[MAXWORD];
-  int found = NO; //YES if match was found
-  int num;        //number of the first ident, chars
+  int found = NO; /* YES if match was found*/
+  int num;        /* number of the first ident, chars */
 
   num = (--argc && (*++argv)[0] == '-') ? atoi(argv[0] + 1) : 7;
   root = NULL;
@@ -38,7 +48,12 @@ int main(int argc, char *argv[]) {
   treexprint(root);
   return 0;
 }
-// addtreex: add a node with w, at or below p
+/* make a node*/
+struct tnode *talloc(void) {
+  return (struct tnode *) malloc(sizeof (struct tnode));
+}
+
+/* addtreex: add a node with w, at or below p */
 struct tnode *addtreex(struct tnode *p, char *w, int num, int *found){
   int cond;
   
@@ -54,7 +69,7 @@ struct tnode *addtreex(struct tnode *p, char *w, int num, int *found){
   return p;
 }
 
-// compare word and get p-> match
+/* compare word and get p-> match */
 int compare(char *s, struct tnode *p, int num, int *found) {
   int i;
   char *t = p->word;
@@ -62,14 +77,14 @@ int compare(char *s, struct tnode *p, int num, int *found) {
   for(i = 0; *s == *t; i++, s++, t++)
     if(*s == '\0')
       return 0;
-  if(i >= num) { //identical in first num chars ?
+  if(i >= num) { /* identical in first num chars ? */
     *found = YES;
     p->match = YES;
   }
   return *s - *t;
 }
 
-// in-order print of tree p if p->match == YES
+/* in-order print of tree p if p->match == YES */
 void treexprint(struct tnode *p) {
   if(p != NULL) {
     treexprint(p->left);
@@ -80,10 +95,9 @@ void treexprint(struct tnode *p) {
 }
 
 
-//get next word or characte from input
+/* get next word or characte from input */
 int getword(char *word, int lim){
-  int c, d, comment(void), getch(void);
-  coid ungetch(int);
+  int c, d;
   char *w = word;
 
   while(isspace(c = getch()))
@@ -96,7 +110,7 @@ int getword(char *word, int lim){
 	ungetch(*w);
 	break;
       }
-  } else if (c == '\'' || c -- '"') {
+  } else if (c == '\'' || c == '"') {
     for (; --lim > 0; *w++)
       if((*w = getch()) == '\\')
 	*++w = getch();
@@ -114,7 +128,7 @@ int getword(char *word, int lim){
   return c;
 }
 
-//skip over comment and return acharacte
+/* skip over comment and return a character */
 int comment(void){
   int c;
   while((c = getch()) != EOF)
@@ -123,5 +137,18 @@ int comment(void){
 	break;
       else
 	ungetch(c);
-  reutn c;
+  return c;
+}
+
+int getch(void) /* get a (possibly pushed back) character */
+{
+  return((bufp > 0) ? buf[--bufp] : getch());
+}
+
+void ungetch (int c) /* push character back on input */
+{
+  if (bufp > BUFSIZE)
+    printf("ungetch: too many characters\n");
+  else
+    buf[bufp++] = c;
 }
