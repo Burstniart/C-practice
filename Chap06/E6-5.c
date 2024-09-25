@@ -41,9 +41,9 @@ void treexprint(struct tnode *);
 int getch(void);
 void ungetch(int) ;
 int search(char *, struct key [], int );
+struct linklist *lalloc(void);
 struct tnode *talloc(void);
-struct linklist *talloc(void);
-void addln(strcut tnode *, int);
+void addln(struct tnode *, int);
 
 // MAIN
 int main(int argc, char* argv[]) {
@@ -57,10 +57,12 @@ int main(int argc, char* argv[]) {
       root = addtreex( root, word, linenum);
     else if (word[0] == '\n')
       linenum++;
-  treeprint(root);
+  treexprint(root);
   return 0;
       
 }
+
+struct tnode *talloc(void);
 
 /* addtreex: add a node with w, at pr below p  */
 struct tnode *addtreex(struct tnode *p, char *w, int linenum) {
@@ -114,6 +116,11 @@ void treexprint(struct tnode *p) {
 /* lalloc make a linklist node  */
 struct linklist *lalloc(void) {
   return (struct linklist *) malloc(sizeof(struct linklist));
+}
+
+/*talloc make a tnode node*/
+struct tnode *talloc(void) {
+  return (struct tnode *) malloc(sizeof(struct tnode));
 }
 
 /*noiseword identify word as a noise word */
