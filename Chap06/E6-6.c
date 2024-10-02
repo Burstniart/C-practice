@@ -40,8 +40,8 @@ int main(int argc, char* argv[]) {
   int i, t;
 
   root = NULL;
-  while(t = getword(word, MAXWORD) != EOF)
-    if(isalpha(t))
+  while(getword(word, MAXWORD) != EOF)
+    if(isalpha(word[0]))
       root = addtree(root, word);
   treestore(root);
   sortlist();
@@ -75,7 +75,7 @@ void sortlist() {
 }
 int getword(char *w, int lim){
   //rebuild this piece on top of 6.5 and see if it works
-
+  printf("%c \n"),w;
   int c, t;
   if(type(c = *w++ = getch()) != LETTER) {
     printf("hello \n"),c;
@@ -123,7 +123,7 @@ struct tnode *addtree(struct tnode *p, char *w) {
   int cond;
   
   if(p == NULL) {
-    p == talloc();
+    p = talloc();
     p->word = strdup(w);
     p->count = 1;
     p->left = p->right = NULL;
