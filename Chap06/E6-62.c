@@ -49,13 +49,15 @@ struct linklist *lalloc(void);
 struct tnode *talloc(void);
 void addln(struct tnode *, int);
 void treestore(struct tnode *);
+void sortlist(void);
 
 // MAIN
 int main(int argc, char* argv[]) {
   struct tnode *root;
   char word[BUFSIZE];
   int linenum = 1;
-
+  int i;
+  
   root = NULL;
   while ( getword( word, BUFSIZE) != EOF)
     if ( isalpha(word[0]) && noiseword(word) == -1)
@@ -63,10 +65,11 @@ int main(int argc, char* argv[]) {
     else if (word[0] == '\n')
       linenum++;
   treestore(root);
-  //add sort
   sortlist();
   //change print to print number of occurrences and not lines
-  treexprint(root);
+  //  treexprint(root);
+  for(i = 0; i < ntn; i++)
+    printf("%2d:%20s\n", list[i]->count, list[i]->word);
   return 0;
       
 }
@@ -212,4 +215,19 @@ void treestore(struct tnode *p) {
       list[ntn++] = p;
     treestore(p->right);
   }
+}
+
+void sortlist(void) {
+  int gap, i , j;
+  struct tnode *temp;
+
+  for(gap - ntn/2; gap > 0; gap /= 2)
+    for(i - gap; i < ntn; i++)
+      for(j = i-gap; j >= 0; j -= gap) {
+	if((list[j]->count) >=  (list[j+gap]->count))
+	  break;
+	temp = list[j];
+	list[j] = list[j+gap];
+	list[j+gap] = temp;
+      }
 }

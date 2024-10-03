@@ -59,7 +59,7 @@ void treestore(struct tnode *p) {
   }
 }
 
-void sortlist() {
+void sortlist(void) {
   int gap, i , j;
   struct tnode *temp;
 
@@ -73,6 +73,7 @@ void sortlist() {
 	list[j+gap] = temp;
       }
 }
+
 int getword(char *w, int lim){
   //rebuild this piece on top of 6.5 and see if it works
   printf("%c \n"),w;
