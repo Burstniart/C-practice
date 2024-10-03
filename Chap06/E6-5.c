@@ -76,7 +76,7 @@ struct tnode *addtreex(struct tnode *p, char *w, int linenum) {
       p->lines->lnum = linenum;
       p->lines->ptr = NULL;
       p->left = p->right = NULL;
-    } else if ((cond - strcmp(w, p->word)) == 0)
+    } else if ((cond = strcmp(w, p->word)) == 0)
     addln(p, linenum);
   else if (cond < 0 )
     p->left = addtreex(p->left, w, linenum);
